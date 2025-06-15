@@ -118,7 +118,7 @@ const Grid: React.FC<GridProps> = ({
                                 bounds="parent"
                                 dragGrid={[GRID_UNIT, GRID_UNIT]}
                                 resizeGrid={[GRID_UNIT, GRID_UNIT]}
-                                onDragStop={(e, d) => {
+                                onDragStop={(_e, d) => {
                                     const snappedX = snapToGrid(d.x);
                                     const snappedY = snapToGrid(d.y);
                                     const newX =
@@ -133,10 +133,10 @@ const Grid: React.FC<GridProps> = ({
                                     });
                                 }}
                                 onResizeStop={(
-                                    e,
-                                    direction,
+                                    _e,
+                                    _direction,
                                     ref,
-                                    delta,
+                                    _delta,
                                     position
                                 ) => {
                                     const snappedWidth = snapToGrid(
