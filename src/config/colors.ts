@@ -1,6 +1,3 @@
-// src/config/colors.ts
-
-// 1. Define the configuration for each color (this is unchanged)
 export const COLOR_CONFIG = [
     { name: "emerald", hex: "#34D399", tw: "emerald-500" },
     { name: "amber", hex: "#F59E0B", tw: "amber-500" },
@@ -11,21 +8,14 @@ export const COLOR_CONFIG = [
     { name: "teal", hex: "#2DD4BF", tw: "teal-400" },
 ] as const;
 
-// 2. Create a type for the color names (this is unchanged)
 export type ColorName = typeof COLOR_CONFIG[number]["name"];
 
-// 3. Create a map for easy lookups by name (this is unchanged)
 export const COLOR_MAP = COLOR_CONFIG.reduce((map, color) => {
     map[color.name] = color;
     return map;
 }, {} as Record<ColorName, typeof COLOR_CONFIG[number]>);
 
 
-// --- NEW MAPPINGS FOR TAILWIND ---
-// By writing out the full class strings here, Tailwind's scanner will find them
-// and generate the necessary CSS at build time.
-
-// Map for unselected items (60% opacity)
 export const UNSELECTED_COLOR_CLASSES: Record<ColorName, string> = {
     emerald: "bg-emerald-500/60",
     amber: "bg-amber-500/60",
@@ -36,7 +26,6 @@ export const UNSELECTED_COLOR_CLASSES: Record<ColorName, string> = {
     teal: "bg-teal-400/60",
 };
 
-// Map for selected items (80% opacity)
 export const SELECTED_COLOR_CLASSES: Record<ColorName, string> = {
     emerald: "bg-emerald-500/80",
     amber: "bg-amber-500/80",

@@ -1,5 +1,3 @@
-// src/components/grid.tsx
-
 import React, { useLayoutEffect, useRef, useState } from "react";
 import { Rnd } from "react-rnd";
 import type { GridItemType } from "../types/types";
@@ -37,7 +35,6 @@ const Grid: React.FC<GridProps> = ({
     useLayoutEffect(() => {
         const updateSize = () => {
             if (wrapperRef.current) {
-                // The snapping logic is correct, it calculates the "safe area"
                 const snappedWidth =
                     Math.floor(wrapperRef.current.clientWidth / GRID_UNIT) *
                     GRID_UNIT;
@@ -70,16 +67,10 @@ const Grid: React.FC<GridProps> = ({
     };
 
     return (
-        // --- OUTER WRAPPER ---
-        // Its job is to fill the space and center the actual grid container.
-        // It no longer has the background style or the onClick handler.
         <div
             ref={wrapperRef}
             className="w-full h-full flex items-center justify-center"
         >
-            {/* --- INNER GRID CONTAINER (THE FIX) --- */}
-            {/* This is our "perfect" grid. Its dimensions are explicitly set from state. */}
-            {/* It gets the background, is relative, and contains the items. */}
             {gridDimensions.width > 0 && (
                 <div
                     className="relative"
@@ -91,8 +82,6 @@ const Grid: React.FC<GridProps> = ({
                     onClick={() => onSelectItem("")}
                 >
                     {items.map((item) => {
-                        // All these calculations are now relative to the inner grid's dimensions,
-                        // which is correct.
                         const size = {
                             width: item.width * gridDimensions.width,
                             height: item.height * gridDimensions.height,
@@ -113,8 +102,6 @@ const Grid: React.FC<GridProps> = ({
                                 key={item.id}
                                 size={size}
                                 position={position}
-                                // The `bounds="parent"` prop now correctly constrains the item
-                                // to the inner grid container.
                                 bounds="parent"
                                 dragGrid={[GRID_UNIT, GRID_UNIT]}
                                 resizeGrid={[GRID_UNIT, GRID_UNIT]}

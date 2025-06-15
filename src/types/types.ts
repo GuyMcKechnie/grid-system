@@ -1,5 +1,4 @@
-// src/types/types.ts
-import type { ColorName } from "../config/colors"; // Import the new type
+import type { ColorName } from "../config/colors";
 
 export interface GridItemType {
     id: string;
@@ -7,5 +6,5 @@ export interface GridItemType {
     y: number;
     width: number;
     height: number;
-    color: ColorName; // Use the specific ColorName type instead of a generic string
+    color: ColorName;
 }

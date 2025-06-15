@@ -5,8 +5,8 @@ import { v4 as uuidv4 } from "uuid";
 import ControlPanel from "./components/control-panel";
 import Grid from "./components/grid";
 import OutputPanel from "./components/output-panel";
+import { COLOR_CONFIG } from "./config/colors";
 import type { GridItemType } from "./types/types";
-import { COLOR_CONFIG } from "./config/colors"; // Import our new color config
 
 function App() {
     const [items, setItems] = useState<GridItemType[]>([]);
@@ -16,8 +16,6 @@ function App() {
         items.find((item) => item.id === selectedItemId) || null;
 
     const handleAddItem = () => {
-        // --- CHANGE IS HERE ---
-        // Get the full color object from our config array
         const color = COLOR_CONFIG[items.length % COLOR_CONFIG.length];
 
         const newItem: GridItemType = {
@@ -26,14 +24,11 @@ function App() {
             y: 0.25,
             width: 0.2,
             height: 0.2,
-            // Assign just the color's name to the item
             color: color.name,
         };
         setItems([...items, newItem]);
         setSelectedItemId(newItem.id);
     };
-
-    // ... rest of the App.tsx component is unchanged ...
 
     const handleUpdateItem = (id: string, newProps: Partial<GridItemType>) => {
         setItems((currentItems) =>

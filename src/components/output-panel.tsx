@@ -1,5 +1,3 @@
-// src/components/output-panel.tsx
-
 import React, { useState } from "react";
 import type { GridItemType } from "../types/types";
 
@@ -57,10 +55,6 @@ const OutputPanel: React.FC<OutputPanelProps> = ({ items }) => {
                     {copySuccess || "Copy"}
                 </button>
             </div>
-            <p className="text-xs text-gray-500 flex-shrink-0">
-                The output includes the item's assigned color and its calculated
-                (x0, x1, y0, y1) bounds.
-            </p>
         </div>
     );
 };
