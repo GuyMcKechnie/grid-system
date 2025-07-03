@@ -1,10 +1,13 @@
 import React, { useLayoutEffect, useRef, useState } from "react";
 import { Rnd } from "react-rnd";
 import type { GridItemType } from "../types/types";
+import { Gauge, PieChart, ScatterChart, BarChart } from 'lucide-react';
 
 import {
     SELECTED_COLOR_CLASSES,
     UNSELECTED_COLOR_CLASSES,
+    SELECTED_COLOR_CLASSES_NO_BG,
+    UNSELECTED_COLOR_CLASSES_NO_BG,
 } from "../config/colors";
 
 interface GridProps {
@@ -54,16 +57,46 @@ const Grid: React.FC<GridProps> = ({
         return () => window.removeEventListener("resize", updateSize);
     }, []);
 
-    const snapToGrid = (value: number) => {
-        return Math.round(value / GRID_UNIT) * GRID_UNIT;
-    };
-
     const gridStyle = {
         backgroundImage: `
       linear-gradient(to right, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
       linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 1px, transparent 1px)
     `,
         backgroundSize: `${GRID_UNIT}px ${GRID_UNIT}px`,
+    };
+
+    // Determine the icon color class based on selection
+    const renderChartType = (item: GridItemType) => {
+        const iconColorClass = item.id === selectedItemId
+            ? SELECTED_COLOR_CLASSES_NO_BG[item.color]
+            : UNSELECTED_COLOR_CLASSES_NO_BG[item.color];
+
+        const iconProps = {
+            className: `w-12 h-12 ${iconColorClass}`, // Apply color and size
+        };
+
+        switch (item.type) {
+            case "gauge": {
+                return <Gauge {...iconProps} />;
+            }
+            case "pie": {
+                return <PieChart {...iconProps} />;
+            }
+            case "scatter": {
+                return <ScatterChart {...iconProps} />;
+            }
+            case "bar": {
+                return <BarChart {...iconProps} />;
+            }
+            default:
+                return (
+                    <div
+                        className={`text-xs text-gray-400 ${iconColorClass}`}
+                    >
+                        Unknown Chart Type
+                    </div>
+                );
+        }
     };
 
     return (
@@ -102,19 +135,20 @@ const Grid: React.FC<GridProps> = ({
                                 key={item.id}
                                 size={size}
                                 position={position}
-                                bounds="parent"
                                 dragGrid={[GRID_UNIT, GRID_UNIT]}
                                 resizeGrid={[GRID_UNIT, GRID_UNIT]}
                                 onDragStop={(_e, d) => {
-                                    const snappedX = snapToGrid(d.x);
-                                    const snappedY = snapToGrid(d.y);
-                                    const newX =
-                                        snappedX / gridDimensions.width;
-                                    const newY =
-                                        1 -
-                                        snappedY / gridDimensions.height -
-                                        item.height;
+                                    // d.x and d.y are already snapped by dragGrid
+                                    let newX = d.x / gridDimensions.width;
+                                    let newY = 1 - (d.y / gridDimensions.height) - item.height;
+
+                                    // Clamp positions to max 1.0 as per requirement
+                                    // x and y can be negative as blocks can go off grid
+                                    newX = Math.min(1, newX);
+                                    newY = Math.min(1, newY);
+
                                     onUpdateItem(item.id, {
+                                        // Round to nearest 0.05
                                         x: roundToStep(newX, 0.05),
                                         y: roundToStep(newY, 0.05),
                                     });
@@ -126,25 +160,22 @@ const Grid: React.FC<GridProps> = ({
                                     _delta,
                                     position
                                 ) => {
-                                    const snappedWidth = snapToGrid(
-                                        parseFloat(ref.style.width)
-                                    );
-                                    const snappedHeight = snapToGrid(
-                                        parseFloat(ref.style.height)
-                                    );
-                                    const snappedX = snapToGrid(position.x);
-                                    const snappedY = snapToGrid(position.y);
-                                    const newWidth =
-                                        snappedWidth / gridDimensions.width;
-                                    const newHeight =
-                                        snappedHeight / gridDimensions.height;
-                                    const newX =
-                                        snappedX / gridDimensions.width;
-                                    const newY =
-                                        1 -
-                                        snappedY / gridDimensions.height -
-                                        newHeight;
+                                    // ref.style.width/height and position.x/y are already snapped by resizeGrid
+                                    let newWidth = parseFloat(ref.style.width) / gridDimensions.width;
+                                    let newHeight = parseFloat(ref.style.height) / gridDimensions.height;
+                                    let newX = position.x / gridDimensions.width;
+                                    let newY = 1 - (position.y / gridDimensions.height) - newHeight;
+
+                                    // Clamp values as per requirement
+                                    // x and y can be negative, but not over 1.0
+                                    newX = Math.min(1, newX);
+                                    newY = Math.min(1, newY);
+                                    // width and height must be positive and not over 1.0
+                                    newWidth = Math.max(0, Math.min(1, newWidth));
+                                    newHeight = Math.max(0, Math.min(1, newHeight));
+
                                     onUpdateItem(item.id, {
+                                        // Round to nearest 0.05
                                         width: roundToStep(newWidth, 0.05),
                                         height: roundToStep(newHeight, 0.05),
                                         x: roundToStep(newX, 0.05),
@@ -154,18 +185,23 @@ const Grid: React.FC<GridProps> = ({
                                 onClick={(e: {
                                     stopPropagation: () => void;
                                 }) => {
-                                    e.stopPropagation();
+                                    e.stopPropagation(); // Prevent grid click from deselecting
                                     onSelectItem(item.id);
                                 }}
-                                className={`flex items-center justify-center transition-all duration-200 ${backgroundColorClass} ${
-                                    isSelected
-                                        ? "ring-2 ring-cyan-300 z-10"
-                                        : "z-0"
-                                }`}
+                                className={`flex flex-col items-center justify-center transition-all duration-200 ${backgroundColorClass} ${isSelected
+                                    ? "ring-2 ring-cyan-300 z-10"
+                                    : "z-0"
+                                    }`}
                             >
-                                <span className="text-xs text-white font-mono select-none">
-                                    ID: {item.id.substring(0, 4)}
-                                </span>
+                                <div className="flex flex-col items-center justify-center text-center">
+                                    {renderChartType(item)}
+                                    <span className="text-xs text-white font-mono select-none mt-1">
+                                        ID: {item.id.substring(0, 4)}
+                                    </span>
+                                    {item.channelNumber !== "" && (
+                                        <span className="text-xs text-white font-mono select-none">CH: {item.channelNumber}</span>
+                                    )}
+                                </div>
                             </Rnd>
                         );
                     })}

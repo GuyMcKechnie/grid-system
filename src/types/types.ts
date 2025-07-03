@@ -1,4 +1,4 @@
-import type { ColorName } from "../config/colors";
+export type ChartType = "gauge" | "pie" | "scatter" | "bar";
 
 export interface GridItemType {
     id: string;
@@ -6,5 +6,7 @@ export interface GridItemType {
     y: number;
     width: number;
     height: number;
-    color: ColorName;
+    color: typeof import("../config/colors").COLOR_CONFIG[number]["name"];
+    type: ChartType;
+    channelNumber: string; // Changed to string
 }

@@ -3,29 +3,60 @@ import type { GridItemType } from "../types/types";
 
 interface OutputPanelProps {
     items: GridItemType[];
+    view: string; // View is now a global prop
 }
 
-const OutputPanel: React.FC<OutputPanelProps> = ({ items }) => {
+const OutputPanel: React.FC<OutputPanelProps> = ({
+    items,
+    view, // Remove channelNumber from destructuring as it's not passed as a prop
+}) => {
     const [copySuccess, setCopySuccess] = useState("");
 
+    // Helper to format numbers with 'f' suffix for C# float literals
     const formatValue = (value: number) => `${value.toFixed(2)}f`;
 
     const formattedOutput = items.map((item) => {
-        const x0 = item.x;
-        const x1 = item.x + item.width;
-        const y0 = item.y;
-        const y1 = item.y + item.height;
+        // Determine the final channel parameter for C# output
+        // It should be a number if the input is a valid number,
+        // otherwise it should be a quoted string literal.
+        const finalChannelParameter = (() => {
+            const channelValue = item.channelNumber.trim(); // Get the trimmed string value
 
-        return {
-            id: item.id,
-            color: item.color, // This will be "emerald", "amber", etc.
-            bounds: `(${formatValue(x0)}, ${formatValue(x1)}, ${formatValue(
-                y0
-            )}, ${formatValue(y1)})`,
-        };
+            // Check if it's a non-empty string that can be parsed as a finite number
+            const num = Number(channelValue);
+            if (channelValue !== "" && !isNaN(num) && isFinite(num)) {
+                // If it's a valid number, output it as a number literal
+                return num;
+            } else {
+                // Otherwise (empty string or non-numeric string), output it as a C# string literal
+                return channelValue;
+            }
+        })();
+
+        let traceType;
+        switch (item.type) {
+            case "gauge":
+                traceType = "IndicatorTrace";
+                break;
+            case "pie":
+                traceType = "PieTrace";
+                break;
+            case "scatter":
+                traceType = "ScatterTrace";
+                break;
+            case "bar":
+                traceType = "BarTrace";
+                break;
+            default:
+                traceType = "UnknownTrace"; // Fallback for unknown types
+        }
+
+        const addMethodCall = `new ${traceType}().AutoGen(${view}.plot.layout, new Domain(${formatValue(item.x)}, ${formatValue(item.width)}, ${formatValue(item.y)}, ${formatValue(item.height)}), _dataPacket, ${finalChannelParameter})`;
+        return `${view}.plot.data.Add(${addMethodCall});`;
     });
 
-    const outputString = JSON.stringify(formattedOutput, null, 2);
+    // Join all formatted lines with a newline
+    const outputString = formattedOutput.join("\n");
 
     const handleCopy = () => {
         navigator.clipboard.writeText(outputString).then(
@@ -41,19 +72,21 @@ const OutputPanel: React.FC<OutputPanelProps> = ({ items }) => {
 
     return (
         <div className="flex flex-col h-full space-y-4">
-            <h2 className="text-xl font-semibold text-gray-200 flex-shrink-0">
-                Generated Coordinates
-            </h2>
+            <div className="flex justify-between items-center flex-shrink-0">
+                <h2 className="text-xl font-semibold text-gray-200">
+                    Output
+                </h2>
+                <button
+                    onClick={handleCopy}
+                    className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-3 rounded text-xs transition-colors"
+                >
+                    {copySuccess || "Copy"}
+                </button>
+            </div>
             <div className="relative flex-grow min-h-0">
                 <pre className="absolute inset-0 bg-gray-900 text-sm text-green-300 p-4 rounded-lg overflow-auto w-full font-mono">
                     <code>{outputString}</code>
                 </pre>
-                <button
-                    onClick={handleCopy}
-                    className="absolute top-2 right-2 bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-3 rounded text-xs transition-colors z-10"
-                >
-                    {copySuccess || "Copy"}
-                </button>
             </div>
         </div>
     );
