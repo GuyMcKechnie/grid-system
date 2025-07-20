@@ -123,12 +123,14 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 }
 
                 // Apply clamping based on field
-                if (field === "x" || field === "y") {
-                    // Starting positions can be negative, but not over 1.0
-                    parsedValue = Math.min(1, parsedValue);
-                } else if (field === "width" || field === "height") {
-                    // Width/Height must be positive and not over 1.0
-                    parsedValue = Math.max(0, Math.min(1, parsedValue));
+                if (field === "x") {
+                    parsedValue = Math.max(0, Math.min(1 - selectedItem.width, parsedValue));
+                } else if (field === "y") {
+                    parsedValue = Math.max(0, Math.min(1 - selectedItem.height, parsedValue));
+                } else if (field === "width") {
+                    parsedValue = Math.max(0, Math.min(1 - selectedItem.x, parsedValue));
+                } else if (field === "height") {
+                    parsedValue = Math.max(0, Math.min(1 - selectedItem.y, parsedValue));
                 }
 
                 // Round to nearest 0.05 for coordinates
@@ -204,8 +206,8 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                             value={selectedItem.channelNumber}
                             onChange={handleItemChange("channelNumber")}
                             placeholder="e.g. 'gen_frequency'"
-                        /> 
-                        
+                        />
+
                         <ChartTypeSelector
                             value={selectedItem.type}
                             onChange={handleItemChange("type")}

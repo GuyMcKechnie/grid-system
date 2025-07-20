@@ -18,40 +18,38 @@ const OutputPanel: React.FC<OutputPanelProps> = ({
     const formattedOutput = items.map((item) => {
         // Determine the final channel parameter for C# output
         // It should be a number if the input is a valid number,
-        // otherwise it should be a quoted string literal.
-        const finalChannelParameter = (() => {
-            const channelValue = item.channelNumber.trim(); // Get the trimmed string value
+        // otherwise it should be a quoted string literal (unless for scatter).
+        const channelValue = item.channelNumber.trim();
+        const num = Number(channelValue);
+        const isChannelNumeric = channelValue !== "" && !isNaN(num) && isFinite(num);
 
-            // Check if it's a non-empty string that can be parsed as a finite number
-            const num = Number(channelValue);
-            if (channelValue !== "" && !isNaN(num) && isFinite(num)) {
-                // If it's a valid number, output it as a number literal
-                return num;
-            } else {
-                // Otherwise (empty string or non-numeric string), output it as a C# string literal
-                return channelValue;
+        let addMethodCall: string;
+
+        if (item.type === "scatter") {
+            // For scatter, channelNumber MUST be an integer for `new int[] {channelNumber}`
+            // The input field's string value is used directly here, assuming it resolves to an integer variable/constant in C# context.
+            const scatterChannelParam = channelValue;
+            addMethodCall = `new AreaChart().MultiTimeAutoGen(${view}.plot.layout, new Domain(${formatValue(item.x)}, ${formatValue(item.x + item.width)}, ${formatValue(item.y)}, ${formatValue(item.y + item.height)}), _dataPacket, new int[] {${scatterChannelParam}})`;
+        } else {
+            // For other chart types, use the original logic for channel parameter
+            const finalChannelParameter = isChannelNumeric ? num : `"${channelValue}"`;
+
+            let traceType;
+            switch (item.type) {
+                case "gauge":
+                    traceType = "RadialGauge";
+                    break;
+                case "pie":
+                    traceType = "PieTrace";
+                    break;
+                case "bar":
+                    traceType = "BarTrace";
+                    break;
+                default:
+                    traceType = "UnknownTrace"; // Fallback for unknown types
             }
-        })();
-
-        let traceType;
-        switch (item.type) {
-            case "gauge":
-                traceType = "IndicatorTrace";
-                break;
-            case "pie":
-                traceType = "PieTrace";
-                break;
-            case "scatter":
-                traceType = "ScatterTrace";
-                break;
-            case "bar":
-                traceType = "BarTrace";
-                break;
-            default:
-                traceType = "UnknownTrace"; // Fallback for unknown types
+            addMethodCall = `new ${traceType}().AutoGen(${view}.plot.layout, new Domain(${formatValue(item.x)}, ${formatValue(item.x + item.width)}, ${formatValue(item.y)}, ${formatValue(item.y + item.height)}), _dataPacket, ${finalChannelParameter})`;
         }
-
-        const addMethodCall = `new ${traceType}().AutoGen(${view}.plot.layout, new Domain(${formatValue(item.x)}, ${formatValue(item.width)}, ${formatValue(item.y)}, ${formatValue(item.height)}), _dataPacket, ${finalChannelParameter})`;
         return `${view}.plot.data.Add(${addMethodCall});`;
     });
 

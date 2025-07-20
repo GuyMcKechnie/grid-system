@@ -137,6 +137,7 @@ const Grid: React.FC<GridProps> = ({
                                 position={position}
                                 dragGrid={[GRID_UNIT, GRID_UNIT]}
                                 resizeGrid={[GRID_UNIT, GRID_UNIT]}
+                                bounds="parent" // Restrict movement and resizing to the parent container
                                 onDragStop={(_e, d) => {
                                     // d.x and d.y are already snapped by dragGrid
                                     let newX = d.x / gridDimensions.width;
@@ -161,21 +162,12 @@ const Grid: React.FC<GridProps> = ({
                                     position
                                 ) => {
                                     // ref.style.width/height and position.x/y are already snapped by resizeGrid
-                                    let newWidth = parseFloat(ref.style.width) / gridDimensions.width;
-                                    let newHeight = parseFloat(ref.style.height) / gridDimensions.height;
-                                    let newX = position.x / gridDimensions.width;
-                                    let newY = 1 - (position.y / gridDimensions.height) - newHeight;
-
-                                    // Clamp values as per requirement
-                                    // x and y can be negative, but not over 1.0
-                                    newX = Math.min(1, newX);
-                                    newY = Math.min(1, newY);
-                                    // width and height must be positive and not over 1.0
-                                    newWidth = Math.max(0, Math.min(1, newWidth));
-                                    newHeight = Math.max(0, Math.min(1, newHeight));
+                                    const newWidth = parseFloat(ref.style.width) / gridDimensions.width;
+                                    const newHeight = parseFloat(ref.style.height) / gridDimensions.height;
+                                    const newX = position.x / gridDimensions.width;
+                                    const newY = 1 - (position.y / gridDimensions.height) - newHeight;
 
                                     onUpdateItem(item.id, {
-                                        // Round to nearest 0.05
                                         width: roundToStep(newWidth, 0.05),
                                         height: roundToStep(newHeight, 0.05),
                                         x: roundToStep(newX, 0.05),
